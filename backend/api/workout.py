@@ -23,6 +23,21 @@ def get_workouts(workout_service: WorkoutService = Depends(WorkoutService)) -> l
         
     return workout_service.all()
 
+@api.get("/{workout_id}", response_model=Workout, tags=["Workouts"])
+def get_workout_by_id(workout_id: int, workout_service: WorkoutService = Depends(WorkoutService)) -> Workout:
+    """
+    Get a workout by its ID
+
+    Params:
+        workout_id: The ID of the workout to retrieve
+        workout_service: Service for interacting with workouts
+
+    Returns:
+        Workout: The workout with the specified ID
+    """
+
+    return workout_service.get_workout_by_id(workout_id)
+
 
 @api.post("/", response_model=Workout, tags=["Workouts"])
 def create_workout(workout: Workout, workout_service: WorkoutService = Depends(WorkoutService)) -> Workout:
