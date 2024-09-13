@@ -71,9 +71,9 @@ class OpenAIService:
         return generated_text
     
     
-    def generate_workout_improvement_advice(self, avg_distance: float, avg_duration: float) -> str:
+    def generate_all_workout_improvement_advice(self, avg_distance: float, avg_duration: float) -> str:
         """
-        Uses the OpenAI API to generate a recommendation for improving a workout based on the distance and duration.
+        Uses the OpenAI API to generate a recommendation for improving a workout based on the average distance and duration across all workouts.
 
         Params:
             workout: The workout data
@@ -84,6 +84,39 @@ class OpenAIService:
 
         
         prompt = f"Generate advice for how to improve the distance and time of a runner with {avg_distance} miles and {avg_duration} minutes over the course of their workouts for the last 7 days. Include things like speed, endurance, form, and how often they should be running."
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages= [
+            {
+                "role": "system",
+                "content": "You are a fitness bot that is giving advice to a user for a running workout application."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+            ],
+        )
+
+        generated_text = response.choices[0].message.content
+        
+        return generated_text
+    
+
+    def generate_workout_improvement_advice(self, workout: Workout) -> str:
+        """
+        Uses the OpenAI API to generate a recommendation for improving a single workout based on the distance and duration.
+
+        Params:
+            workout: The workout data
+        
+        Returns:
+            str: The workout advice
+        """
+
+        
+        prompt = f"Generate advice for how to improve the distance and time of a runner with {workout.distance} miles and {workout.duration} minutes. Include things like speed, endurance, form, and how often they should be running."
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",

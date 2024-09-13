@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend.services.weather import WeatherService
 
@@ -138,7 +139,7 @@ def get_workout_outfit_advice_by_location(city: str, weather_service: WeatherSer
 
 
 @api.get("/advice/improvement/", response_model=str, tags=["Workouts"])
-def get_workout_improvement_advice( workout_service: WorkoutService = Depends(WorkoutService), openai_service: OpenAIService = Depends(OpenAIService)) -> str:
+def get_all_workout_improvement_advice( workout_service: WorkoutService = Depends(WorkoutService), openai_service: OpenAIService = Depends(OpenAIService)) -> str:
     """
     Get advice on how to improve a workout based on weekly averages
 
@@ -154,13 +155,32 @@ def get_workout_improvement_advice( workout_service: WorkoutService = Depends(Wo
     average_distance_per_workout = workout_service.get_average_weekly_aggreate_workout_data("distance")
     average_duration_per_workout = workout_service.get_average_weekly_aggreate_workout_data("duration")
 
-    return openai_service.generate_workout_improvement_advice(average_distance_per_workout, average_duration_per_workout)
+    return openai_service.generate_all_workout_improvement_advice(average_distance_per_workout, average_duration_per_workout)
+
+
+@api.get("/advice/improvement/{workout_id}", response_model=str, tags=["Workouts"])
+def get_workout_improvement_advice(workout_id: int, workout_service: WorkoutService = Depends(WorkoutService), openai_service: OpenAIService = Depends(OpenAIService)) -> str:
+    """
+    Get advice on how to improve a workout based on the distance and duration of a specific workout
+
+    Params:
+        workout_id: The ID of the workout to get advice for
+        workout_service: Service for interacting with workouts
+        openai_service: Service for interacting with the OpenAI API
+
+    Returns:
+        str: The improvement advice
+    """
+
+    workout = workout_service.get_workout_by_id(workout_id)
+
+    return openai_service.generate_workout_improvement_advice(workout)
 
 
 @api.post("/", response_model=Workout, tags=["Workouts"])
 def create_workout(workout: Workout, weather_service: WeatherService = Depends(WeatherService), workout_service: WorkoutService = Depends(WorkoutService)) -> Workout:
     """
-    Create a new workout
+    Create a new workout and generate the weather data for that date.
     
     Params:
         workout: The workout to create
@@ -172,7 +192,17 @@ def create_workout(workout: Workout, weather_service: WeatherService = Depends(W
         Workout: The newly created workout
     """
 
-    weather = weather_service.get_current_weather_by_location(workout.city)
+    # Grab the current day. If the date is the same as the workout date, use the current weather. Otherwise, use the past date. 
+    current_date = datetime.now().date()
+    workout_date = datetime.strptime(workout.date, "%Y-%m-%d").date()
+
+    weather = None
+
+    if workout_date == current_date:
+        weather = weather_service.get_current_weather_by_location(workout.city)
+    # elif workout_date < current_date:
+        # If past data could be accessed: use this, but the free version doesn't include historical data, just current and forecast
+        # weather = weather_service.get_past_weather_by_location(workout.city, workout_date)
 
     return workout_service.create_workout(workout, weather)
 

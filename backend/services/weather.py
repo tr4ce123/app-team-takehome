@@ -226,10 +226,11 @@ class WeatherService:
         start_date = datetime.now(tz).date()
         end_date = start_date + timedelta(days=5)
 
+        # Search for existing data in the database by city, date, and is_current
         query = select(WeatherEntity).filter(WeatherEntity.city == city.lower(), WeatherEntity.date >= start_date, WeatherEntity.date <= end_date, WeatherEntity.is_current == False)
 
+        # To prevent duplicates, return the existing data if it exists
         existing_entities = self._session.scalars(query).all()
-        
         if existing_entities:
             return [entity.to_model() for entity in existing_entities]
         
@@ -239,6 +240,27 @@ class WeatherService:
         # Grab the newly stored data from the database and return it
         stored_entities = self._session.scalars(query).all()
         return [entity.to_model() for entity in stored_entities]
+    
+
+    def get_weather_by_date_and_location(self, city: str, date: str) -> Weather:
+        """
+        Retrieves the weather forecast for a given date. Raises an error if no weather data for the given date is found.
+        
+        Params:
+            date: The date to get the forecast for
+            
+        Returns:
+            Weather: The weather forecast for the given date
+        """
+
+        query = select(WeatherEntity).filter(WeatherEntity.date == date, WeatherEntity.city == city.lower(), WeatherEntity.is_current == False)
+
+        entity = self._session.scalars(query).one_or_none()
+
+        if entity is None:
+            return self.store_weather_by_date(city, date)
+
+        return entity.to_model()
     
     
     def get_current_weather_by_location(self, city: str) -> Weather:

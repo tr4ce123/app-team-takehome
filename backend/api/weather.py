@@ -57,3 +57,36 @@ def create_five_day_forecast_by_city(city: str, weather_service: WeatherService 
     """
 
     return weather_service.store_five_day_weather_forecast(city)
+
+
+@api.post("/{city}/{date}", response_model=Weather, tags=["Weather"])
+def create_weather_forecast_by_date(city: str, date: str, weather_service: WeatherService = Depends(WeatherService)) -> Weather:
+    """
+    Creates a new weather forecast for a given location and date.
+
+    Params:
+        weather_service: Service for interacting with weather data
+        date: The date to get the forecast for in the form of a string
+        city: The location to get the forecast for in the form of a string
+
+    Returns:
+        Weather: The newly created weather forecast
+    """
+
+    return weather_service.store_weather_by_date(city, date)
+
+
+@api.post("/{city}/current", response_model=Weather, tags=["Weather"])
+def create_current_weather_by_location(city: str, weather_service: WeatherService = Depends(WeatherService)) -> Weather:
+    """
+    Creates a new current weather forecast for a given location.
+
+    Params:
+        weather_service: Service for interacting with weather data
+        city: The location to get the forecast for in the form of a string
+
+    Returns:
+        Weather: The newly created current weather forecast
+    """
+
+    return weather_service.store_current_weather(city)

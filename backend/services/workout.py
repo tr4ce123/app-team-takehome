@@ -164,7 +164,9 @@ class WorkoutService:
             raise HTTPException(status_code=400, detail="Workout with this ID already exists")
 
         entity = WorkoutEntity.from_model(workout)
-        entity.weather_id = weather.id
+        
+        if weather is not None:
+            entity.weather_id = weather.id
 
         self._session.add(entity)
         self._session.commit()
