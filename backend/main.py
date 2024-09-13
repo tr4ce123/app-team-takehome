@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .database import engine, Base
-from .api import workout
+from .api import workout, weather
 
 app = FastAPI(
     title="Running Workouts API: App Team Takehonme",
@@ -14,3 +14,4 @@ app = FastAPI(
 Base.metadata.create_all(bind=engine)
 
 app.include_router(workout.api)
+app.include_router(weather.api)
