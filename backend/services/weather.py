@@ -19,7 +19,8 @@ geolocator = Nominatim(user_agent="app-team-takehome", adapter_factory=RequestsA
 
 load_dotenv()
 api_key = os.getenv("WEATHER_API_KEY")
-BASE_URL = "https://api.openweathermap.org/data/2.5/forecast?"
+FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast?"
+CURRENT_URL = "https://api.openweathermap.org/data/2.5/weather?"
 
 tz = timezone("EST")
 
@@ -58,7 +59,7 @@ class WeatherService:
         }
 
         # Make a request to the OpenWeather API and store it
-        response = requests.get(BASE_URL, params)
+        response = requests.get(FORECAST_URL, params)
 
         # Simple check to see if the request was successful
         if response is None or response.status_code != 200:
@@ -70,37 +71,43 @@ class WeatherService:
         return data
     
     
-    def get_five_day_forecast(self, city: str) -> list[Weather]:
+    def fetch_current_weather_from_api(self, city: str) -> dict:
         """
-        Retrieves the weather forecast for the current day and next five days for a given location.
+        Uses geolocator to get the latitude and longitude of a city 
+        and uses the OpenWeather API to get the current weather data.
         
         Params:
-            city: The location to get the forecast for
+            city: The city to get the weather data for
             
         Returns:
             dict: Weather data for the given location
         """
 
-        start_date = datetime.now(tz).date()
-        end_date = start_date + timedelta(days=5)
+        # Use geolocator to get longitude and latitude from the specified city
+        location = geolocator.geocode(city)
+        latitude, longitude = location.latitude, location.longitude
 
-        query = select(WeatherEntity).filter(WeatherEntity.city == city.lower(), WeatherEntity.date >= start_date, WeatherEntity.date <= end_date)
+        params = {
+            "lat": latitude,
+            "lon": longitude,
+            "appid": api_key,
+            "units": "imperial"
+        }
 
-        existing_entities = self._session.scalars(query).all()
-        
-        if existing_entities:
-            return [entity.to_model() for entity in existing_entities]
-        
-        # If the data does not exist in the database, fetch it from the API
-        self.store_weather_forecast(city)
+        # Make a request to the OpenWeather API and store it
+        response = requests.get(CURRENT_URL, params)
 
-        # Grab the newly stored data from the database and return it
-        stored_entities = self._session.scalars(query).all()
-        return [entity.to_model() for entity in stored_entities]
+        # Simple check to see if the request was successful
+        if response is None or response.status_code != 200:
+            return HTTPException(status_code=404, detail="Weather data not found")
+
+        # Ensure the response a dictionary
+        data = response.json()
+
+        return data
     
-
     
-    def store_weather_forecast(self, city: str) -> list[Weather]:
+    def store_five_day_weather_forecast(self, city: str) -> list[Weather]:
         """
         Retrieves the weather forecast for the next seven days for a given location and stores it in the database.
         
@@ -156,7 +163,8 @@ class WeatherService:
                 temp_avg=round(sum(values['temp_avg']) / len(values['temp_avg']), 0),
                 wind_speed=round(sum(values['wind_speed']) / len(values['wind_speed']), 0),
                 weather_main=max(set(values['weather_main']), key=values['weather_main'].count),
-                weather_description=max(set(values['weather_description']), key=values['weather_description'].count)
+                weather_description=max(set(values['weather_description']), key=values['weather_description'].count),
+                is_current=False
             )
 
             self._session.add(entity)
@@ -165,4 +173,90 @@ class WeatherService:
             new_entities.append(entity)
         
 
-        return new_entities
+        return new_entities    
+    
+    
+    def store_current_weather(self, city: str) -> Weather:
+        """
+        Retrieves the current weather data for a given location and stores it in the database.
+        
+        Params:
+            city: The location to get the forecast for
+            
+        Returns:
+            Weather: The current weather data for the given location
+        """
+
+        data = self.fetch_current_weather_from_api(city)
+
+        if data is None:
+            return HTTPException(status_code=404, detail="Weather data not found")
+
+        entity = WeatherEntity(
+            city=city.lower(),
+            date=datetime.now(tz).date().strftime('%Y-%m-%d') + " " + datetime.now(tz).strftime('%I:%M %p'),
+            feels_like=round(data['main']['feels_like'], 0),
+            humidity=round(data['main']['humidity'], 0),
+            temp_min=round(data['main']['temp_min'], 0),
+            temp_max=round(data['main']['temp_max'], 0),
+            temp_avg=round(data['main']['temp'], 0),
+            wind_speed=round(data['wind']['speed'], 0),
+            weather_main=data['weather'][0]['main'],
+            weather_description=data['weather'][0]['description'],
+            is_current=True
+        )
+
+        self._session.add(entity)
+        self._session.commit()
+
+        return entity.to_model()
+    
+
+    def get_five_day_forecast(self, city: str) -> list[Weather]:
+        """
+        Retrieves the weather forecast for the current day and next five days for a given location.
+        
+        Params:
+            city: The location to get the forecast for
+            
+        Returns:
+            dict: Weather data for the given location
+        """
+
+        start_date = datetime.now(tz).date()
+        end_date = start_date + timedelta(days=5)
+
+        query = select(WeatherEntity).filter(WeatherEntity.city == city.lower(), WeatherEntity.date >= start_date, WeatherEntity.date <= end_date, WeatherEntity.is_current == False)
+
+        existing_entities = self._session.scalars(query).all()
+        
+        if existing_entities:
+            return [entity.to_model() for entity in existing_entities]
+        
+        # If the data does not exist in the database, fetch it from the API
+        self.store_five_day_weather_forecast(city)
+
+        # Grab the newly stored data from the database and return it
+        stored_entities = self._session.scalars(query).all()
+        return [entity.to_model() for entity in stored_entities]
+    
+    
+    def get_current_weather_by_location(self, city: str) -> Weather:
+        """
+        Retrieves the weather forecast for a given date. Raises an error if no weather data for the given date is found.
+        
+        Params:
+            date: The date to get the forecast for
+            
+        Returns:
+            Weather: The weather forecast for the given date
+        """
+
+        query = select(WeatherEntity).filter(WeatherEntity.date == datetime.now(tz), WeatherEntity.city == city.lower(), WeatherEntity.is_current == True)
+
+        entity = self._session.scalars(query).one_or_none()
+
+        if entity is None:
+            return self.store_current_weather(city)
+
+        return entity.to_model()

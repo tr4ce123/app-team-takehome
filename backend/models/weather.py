@@ -22,3 +22,4 @@ class Weather(BaseModel):
     wind_speed: float
     weather_main: str
     weather_description: str
+    is_current: bool

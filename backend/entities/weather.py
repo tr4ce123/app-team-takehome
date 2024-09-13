@@ -10,7 +10,7 @@ from ..database import Base
 from sqlalchemy.orm import  Mapped, mapped_column
 
 class WeatherEntity(Base):
-    """SQLAlchemy entity representing the weather. This entity represents the aggregate data of weather for one day for a given city."""
+    """SQLAlchemy entity representing the weather. This entity represents the aggregate data of weather for one day for a given city. All units are Imperial."""
 
     __tablename__ = "weather"
 
@@ -45,6 +45,9 @@ class WeatherEntity(Base):
     # Most common weather description for the day
     weather_description: Mapped[str] = mapped_column(String, nullable=False)
 
+    # Boolean to determine if the weather is the current weather or a forecast
+    is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     def to_model(self) -> Weather:
         """
         Converts a Weather Entity object into a Weather Pydantic Model object
@@ -64,7 +67,8 @@ class WeatherEntity(Base):
             temp_avg=self.temp_avg,
             wind_speed=self.wind_speed,
             weather_main=self.weather_main,
-            weather_description=self.weather_description
+            weather_description=self.weather_description,
+            is_current=self.is_current
         )
     
     @classmethod
@@ -90,5 +94,6 @@ class WeatherEntity(Base):
             temp_avg=weather.temp_avg,
             wind_speed=weather.wind_speed,
             weather_main=weather.weather_main,
-            weather_description=weather.weather_description
+            weather_description=weather.weather_description,
+            is_current=weather.is_current
         )
