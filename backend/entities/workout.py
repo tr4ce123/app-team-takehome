@@ -1,12 +1,14 @@
 """Definition of a SQLAlchemy table-backed object mapping entity for workouts."""
 
 import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Boolean
+
+from backend.entities.weather import WeatherEntity
 
 from ..models.workout import Workout
 from ..database import Base
 
-from sqlalchemy.orm import  Mapped, mapped_column
+from sqlalchemy.orm import  Mapped, mapped_column, relationship
 from pytz import timezone
 tz = timezone("EST")
 
@@ -20,6 +22,9 @@ class WorkoutEntity(Base):
     # Name of the workout
     name: Mapped[str] = mapped_column(String, nullable=False)
 
+    # Location of the workout
+    city: Mapped[str] = mapped_column(String, nullable=False)
+
     # Distance of the workout in miles
     distance: Mapped[float] = mapped_column(Float, nullable=False)
 
@@ -28,7 +33,12 @@ class WorkoutEntity(Base):
 
     # The day in which the workout was created
     date: Mapped[str] = mapped_column(String, nullable=False, default=datetime.datetime.now(tz).strftime("%Y-%m-%d"))
-    # created_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, default=datetime.datetime.now(tz))
+
+    # Store the weather ID foreign key
+    weather_id: Mapped[int] = mapped_column(ForeignKey("weather.id"), nullable=True)
+
+    # Relationship field for the weather entity
+    weather: Mapped["WeatherEntity"] = relationship("WeatherEntity", back_populates="workouts")
 
     def to_model(self) -> Workout:
         """
@@ -41,9 +51,12 @@ class WorkoutEntity(Base):
         return Workout(
             id=self.id,
             name=self.name,
+            city=self.city,
             distance=self.distance,
             duration=self.duration,
-            date=self.date
+            date=self.date,
+            weather_id=self.weather_id,
+            weather=self.weather.to_model() if self.weather else None
         )
     
     @classmethod
@@ -61,7 +74,9 @@ class WorkoutEntity(Base):
         return cls(
             id=workout.id,
             name=workout.name,
+            city=workout.city,
             distance=workout.distance,
             duration=workout.duration,
-            date=workout.date
+            date=workout.date,
+            weather_id=workout.weather_id,
         )

@@ -1,6 +1,8 @@
 import datetime
 from pydantic import BaseModel
 from pytz import timezone
+
+from backend.models.weather import Weather
 tz = timezone("EST")
 
 class Workout(BaseModel):
@@ -13,7 +15,9 @@ class Workout(BaseModel):
 
     id: int | None = None
     name: str
+    city: str
     distance: float
     duration: int
     date: str | None = datetime.datetime.now(tz).strftime("%Y-%m-%d")
-    
+    weather_id: int | None = None
+    weather: Weather | None = None

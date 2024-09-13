@@ -7,7 +7,7 @@ from backend.models.weather import Weather
 
 from ..database import Base
 
-from sqlalchemy.orm import  Mapped, mapped_column
+from sqlalchemy.orm import  Mapped, mapped_column, relationship
 
 class WeatherEntity(Base):
     """SQLAlchemy entity representing the weather. This entity represents the aggregate data of weather for one day for a given city. All units are Imperial."""
@@ -47,6 +47,9 @@ class WeatherEntity(Base):
 
     # Boolean to determine if the weather is the current weather or a forecast
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # Relationship to WorkoutEntity
+    workouts: Mapped[list["WorkoutEntity"]] = relationship("WorkoutEntity", back_populates="weather")
 
     def to_model(self) -> Weather:
         """
