@@ -1,3 +1,7 @@
+from datetime import datetime, timedelta
+from pytz import timezone
+tz = timezone("EST")
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
@@ -42,6 +46,72 @@ class WorkoutService:
         
         return entity.to_model()
     
+    def get_weekly_workouts(self) -> list[Workout]:
+        """
+        Retrieves all workouts from the past 7 days.
+
+        Returns:
+            list[Workout]: All Workouts from the current week
+        """
+
+        start_date = datetime.now(tz).date()
+        end_date = start_date - timedelta(days=7)
+
+        query = select(WorkoutEntity).filter(WorkoutEntity.date <= start_date, WorkoutEntity.date >= end_date)
+        entities = self._session.scalars(query).all()
+
+        return [entity.to_model() for entity in entities]
+    
+    def get_total_weekly_aggreate_workout_data(self, data_point: str) -> float:
+        """
+        Retrieves the aggregate of a specific workout data point from the last 7 days.
+        
+        Params:
+            data_point: The data point to aggregate
+            
+        Returns:
+            float: The aggregate of the specified data point
+        """
+
+        start_date = datetime.now(tz).date()
+        end_date = start_date - timedelta(days=7)
+
+        query = select(WorkoutEntity).filter(WorkoutEntity.date <= start_date, WorkoutEntity.date >= end_date)
+        entities = self._session.scalars(query).all()
+
+        if data_point == "distance":
+            return sum([entity.distance for entity in entities])
+        elif data_point == "duration":
+            return sum([entity.duration for entity in entities])
+        else:
+            raise HTTPException(status_code=400, detail="Invalid data point. Enter 'distance' or 'duration'")
+        
+
+    def get_average_weekly_aggreate_workout_data(self, data_point: str) -> float:
+        """
+        Retrieves the average of a specific workout data point from the last 7 days.
+        
+        Params:
+            data_point: The data point to aggregate
+            
+        Returns:
+            float: The average of the specified data point
+        """
+
+        start_date = datetime.now(tz).date()
+        end_date = start_date - timedelta(days=7)
+
+        query = select(WorkoutEntity).filter(WorkoutEntity.date <= start_date, WorkoutEntity.date >= end_date)
+        entities = self._session.scalars(query).all()
+
+        if data_point == "distance":
+            return round(sum([entity.distance for entity in entities]) / len(entities), 2)
+        elif data_point == "duration":
+            return round(sum([entity.duration for entity in entities]) / len(entities), 2)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid data point. Enter 'distance' or 'duration'")
+    
+
     def create_workout(self, workout: Workout) -> Workout:
         """
         Creates a new workout. 
@@ -104,8 +174,4 @@ class WorkoutService:
             raise HTTPException(status_code=404, detail=f"No workout with ID: { workout_id } to delete")
 
         self._session.delete(entity)
-        self._session.commit()
-
-    # TODO:
-    # Create a few methods that get aggregated data such as distance per week, average duration, etc.
-        
+        self._session.commit()        

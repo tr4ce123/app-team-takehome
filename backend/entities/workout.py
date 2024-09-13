@@ -16,10 +16,19 @@ class WorkoutEntity(Base):
     __tablename__ = "workout"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    # Name of the workout
     name: Mapped[str] = mapped_column(String, nullable=False)
+
+    # Distance of the workout in miles
     distance: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Duration of the workout in minutes
     duration: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, default=datetime.datetime.now(tz))
+
+    # The day in which the workout was created
+    date: Mapped[str] = mapped_column(String, nullable=False, default=datetime.datetime.now(tz).strftime("%Y-%m-%d"))
+    # created_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, default=datetime.datetime.now(tz))
 
     def to_model(self) -> Workout:
         """
@@ -34,7 +43,7 @@ class WorkoutEntity(Base):
             name=self.name,
             distance=self.distance,
             duration=self.duration,
-            created_at=self.created_at
+            date=self.date
         )
     
     @classmethod
@@ -54,5 +63,5 @@ class WorkoutEntity(Base):
             name=workout.name,
             distance=workout.distance,
             duration=workout.duration,
-            created_at=workout.created_at
+            date=workout.date
         )

@@ -7,7 +7,8 @@ app = FastAPI(
     description="API for Running Workouts",
     version="0.1",
     openapi_tags=[
-        workout.openapi_tags
+        workout.openapi_tags,
+        weather.openapi_tags
     ]
 )
 

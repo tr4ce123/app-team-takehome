@@ -15,5 +15,5 @@ class Workout(BaseModel):
     name: str
     distance: float
     duration: int
-    created_at: datetime.datetime | datetime.datetime = datetime.datetime.now(tz)
+    date: str | None = datetime.datetime.now(tz).strftime("%Y-%m-%d")
     
