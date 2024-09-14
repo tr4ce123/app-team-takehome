@@ -136,6 +136,7 @@ When I was naming the url routes to my endpoints, I organized them by functional
 - **Duration**: Duration of the workout (minutes).
 - **Date**: Date and time of the workout.
 - **Weather ID**: Optional foreign key linking to the related weather data.
+- **Wether**: The actual Weather object associated with the Workout model
 
 ### Weather Model
 
