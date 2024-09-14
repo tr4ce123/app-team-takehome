@@ -119,16 +119,19 @@ class WorkoutService:
 
     def get_personal_best_distance(self) -> str:
         """
-        Retrieves the personal bests for distance and duration
+        Retrieves the personal bests distance
         
         Returns:
             str: The personal bests for distance and duration
         """
 
         query = select(WorkoutEntity).order_by(WorkoutEntity.distance.desc())
-        distance_entity = self._session.scalars(query).first()
+        entity = self._session.scalars(query).first()
 
-        return f"Personal best distance: {distance_entity.distance} miles!"
+        if entity is None:
+            raise HTTPException(status_code=400, detail="No personal best duration per mile found")
+
+        return f"Personal best distance: {entity.distance} miles!"
     
 
     def get_personal_best_duration_per_mile(self) -> str:
@@ -143,6 +146,9 @@ class WorkoutService:
         entities = self._session.scalars(query).all()
 
         minimum = min([entity.duration / entity.distance for entity in entities])
+
+        if minimum == 0 or entities is None:
+            raise HTTPException(status_code=400, detail="No personal best duration per mile found")
 
         return f"Your personal best time per mile is {minimum} minutes per mile!"
     
@@ -220,4 +226,4 @@ class WorkoutService:
             raise HTTPException(status_code=404, detail=f"No workout with ID: { workout_id } to delete")
 
         self._session.delete(entity)
-        self._session.commit()        
+        self._session.commit()

@@ -33,7 +33,6 @@ def get_current_weather_by_location(city: str, weather_service: WeatherService =
 
     Params:
         weather_service: Service for interacting with weather data
-        date: The date to get the forecast for in the form of a string
         city: The location to get the forecast for in the form of a string
 
     Returns:
