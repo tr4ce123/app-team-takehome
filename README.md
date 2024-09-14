@@ -4,11 +4,13 @@ This is a RESTful API designed to track running workouts. The API allows users t
 # Table of Contents
 
 - [Running Workout Tracker REST API](#running-workout-tracker-rest-api)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Project Design and Considerations](#project-design-and-considerations)
+- [Presentation](#presentation)
 - [Instructions / Usage](#instructions--usage)
   - [Environment Setup Mac](#environment-setup-mac)
   - [Environment Setup Windows](#environment-setup-windows)
-- [Features](#features)
-- [Technologies Used](#technologies-used)
 - [Data Model](#data-model)
   - [Workout Model](#workout-model)
   - [Weather Model](#weather-model)
@@ -19,30 +21,10 @@ This is a RESTful API designed to track running workouts. The API allows users t
   - [WeatherService Methods](#weatherservice-methods)
   - [WorkoutService Methods](#workoutservice-methods)
   - [OpenAIService Methods](#openaiservice-methods)
-- [Project Design and Considerations](#project-design-and-considerations)
-- [Presentation](#presentation)
 
-
-## Instructions / Usage
-### Environment setup Mac
-1) Clone the repository into your favorite IDE.
-2) Creating a python virtual environment is recommended to prevent conflicts with you global environment's interpreter. You can do this by running `python3 -m venv <yourenvname>` in your root directory or preferably, use VSCode and follow these steps: https://code.visualstudio.com/docs/python/environments. Make sure you activate the venv by running `source venv/bin/activate`.
-3) If in the root directory of the repo, run `python3 -m pip install -r backend/requirements.txt` in your terminal to install the required packages.
-4) To start the backend server, run `uvicorn backend.main:app --reload` in the root directory and navigate to http://127.0.0.1:8000/docs to interact with the API in a browser (note: I ran into issues on my windows desktop using 127.0.0.1:8000 and instead you should just use localhost:8000 if you run into CORS issues). I have set up the FastAPI docs in an organized and intuitive way so feel free to use this link rather than running Postman or something equivalent. Postman does work if that is your preference and you can use the same URL to serve it: http://127.0.0.1:8000 or just localhost port 8000. Parameters can be passed through the URL through Postman and the FastAPI docs will have a form that act as the URL params.
-5) Once the server is up, a file called `sql_app.db` will be created and you can simply delete the file if you want to restart the database. A new one will be created when the server is started up.
-6) Now you can play around with the API to test out its functionality. I'll have documentation below that gives explanations for the api endpoints and their services as well as a high level explanation.
-
-### Environment setup Windows
-1) Clone the repository into your favorite IDE.
-2) Creating a python virtual environment is recommended to prevent conflicts with you global environment's interpreter. You can do this by running `py -m venv <yourenvname>` in your root directory or preferably, use VSCode and follow these steps: https://code.visualstudio.com/docs/python/environments. Make sure you activate the venv by cding into your venv file `cd <yourenvname>` and then run `.\Scripts\activate`. If you're running into trouble and you get an error saying you can't run scripts because they're disabled use this and make sure to run PowerShell as administrator: https://stackoverflow.com/questions/4037939/powershell-says-execution-of-scripts-is-disabled-on-this-system.
-3) Before running the install for requirements, remove uvloop from the requirements.txt file because Windows does not support it and it will still work without it. If in the root directory of the repo, run `py -m pip install -r backend/requirements.txt` in your terminal to install the required packages.
-4) To start the backend server, run `uvicorn backend.main:app --reload` in the root directory and navigate to http://127.0.0.1:8000/docs to interact with the API in a browser (note: I ran into issues on my windows desktop using 127.0.0.1:8000 and instead you should just use localhost:8000 if you run into CORS issues). I have set up the FastAPI docs in an organized and intuitive way so feel free to use this link rather than running Postman or something equivalent. Postman does work if that is your preference and you can use the same URL to serve it: http://127.0.0.1:8000 or just localhost port 8000. Parameters can be passed through the URL through Postman and the FastAPI docs will have a form that act as the URL params.
-5) Once the server is up, a file called `sql_app.db` will be created and you can simply delete the file if you want to restart the database. A new one will be created when the server is started up. Installation of SQLite is not required.
-6) Now you can play around with the API to test out its functionality. I'll have documentation below that gives explanations for the api endpoints and their services as well as a high level explanation.
+# Big Picture
 
 ## Features
-
-### Features
 
 - **Create Workout**: Add new workout records with details like name, location, distance, duration, and date.
 - **Retrieve Workouts**: Fetch individual or multiple workouts, with filtering options for retrieving recent workouts, such as weekly data.
@@ -62,6 +44,72 @@ This is a RESTful API designed to track running workouts. The API allows users t
 - **Pydantic**: Data validation and settings management using Python type annotations.
 - **OpenWeather API**: For fetching weather data related to workouts.
 - **OpenAI API**: To provide personalized workout advice and outfit suggestions based on weather conditions.
+
+### Why use this stack?
+
+#### FastAPI
+- Familiar with Python and wanted a Python-based backend.
+- Popularity and automatic API documentation with interactive `/docs` page.
+- Great for new developers to explore and test endpoints easily.
+- Strong validation, typing, and good performance, all contained within Python.
+
+#### SQLite, SQLAlchemy, Pydantic
+- **SQLite:**
+  - Chose it for its relational database structure—easy to create relationships, like one-to-many between Weather and Workout entities.
+  - Perfect for quick, small-scale projects; easy local development and testing.
+  - Would consider PostgreSQL for larger scale, but SQLite fits this project well.
+- **SQLAlchemy:**
+  - Allows interaction with Python objects instead of raw SQL—better readability and fewer errors.
+  - Integrates smoothly with Pydantic models for cleaner API responses.
+  - Adds an extra layer of protection with safer queries compared to raw SQL.
+- **Pydantic:**
+  - Ensures data validation and integrity with Python type annotations.
+  - Seamlessly integrates with FastAPI to validate incoming data and define response models.
+
+#### OpenWeather API
+- Wanted a weather API for relevant data to enhance user experience.
+- Easy-to-use, well-documented endpoints; straightforward JSON data over SDK.
+- Focused on fields relevant to the frontend: max/min/average temps, conditions, etc.
+- Adds value by providing more context than just workout tracking; useful and informative data for the user.
+
+#### OpenAI API
+- Familiar with the OpenAI Python SDK; integrates a powerful, widely-used API.
+- The GPT-4o model makes generating tailored user recommendations easy.
+- Wanted flexible, accurate suggestions for workouts and outfits based on weather without hardcoding responses.
+- Enhances user experience with personalized, context-aware feedback using simple prompts.
+
+## Project Design and Considerations
+Throughout my API endpoints, routes, and service methods, I try to be as verbose as possible in as few words as possible. Throughout my code you'll see some decently long method names and api routes which is done intentionally because readability is so important. The way I try to program, ESPECIALLY while on a team, is to leave the person reading the code as minimally confused as possible. Readable code makes everyone's lives easier and all it takes it a few extra words and a docstring.
+
+### API Endpoint Structure
+`/workouts/{workout_id}`
+`/workouts/weekly/{data_point}/sum`
+`/workouts/advice/improvement/{workout_id}`
+`/workouts/personal-bests/distance`
+
+When I was naming the url routes to my endpoints, I organized them by functionality and meaning. If you want weekly data, add `/weekly`, if you want advice add `/advice`, etc. When an endpoint is related to a data model, I prepend it with the name of the model i.e. `/workouts`. This way it is painfully obvious what the endpoint is referencing along with the several categorizations of functionality you can see above and below in my routes. 
+
+## Presentation
+
+- A brief presentation and a demo video demonstrating the API endpoints and their usage have been created. This covers the API design choices, challenges faced, and the overall thought process in developing the application.
+
+## Instructions / Usage
+### Environment setup Mac
+1) Clone the repository into your favorite IDE.
+2) Creating a python virtual environment is recommended to prevent conflicts with you global environment's interpreter. You can do this by running `python3 -m venv <yourenvname>` in your root directory or preferably, use VSCode and follow these steps: https://code.visualstudio.com/docs/python/environments. Make sure you activate the venv by running `source venv/bin/activate`.
+3) If in the root directory of the repo, run `python3 -m pip install -r backend/requirements.txt` in your terminal to install the required packages.
+4) To start the backend server, run `uvicorn backend.main:app --reload` in the root directory and navigate to http://127.0.0.1:8000/docs to interact with the API in a browser (note: I ran into issues on my windows desktop using 127.0.0.1:8000 and instead you should just use localhost:8000 if you run into CORS issues). I have set up the FastAPI docs in an organized and intuitive way so feel free to use this link rather than running Postman or something equivalent. Postman does work if that is your preference and you can use the same URL to serve it: http://127.0.0.1:8000 or just localhost port 8000. Parameters can be passed through the URL through Postman and the FastAPI docs will have a form that act as the URL params.
+5) Once the server is up, a file called `sql_app.db` will be created and you can simply delete the file if you want to restart the database. A new one will be created when the server is started up.
+6) Now you can play around with the API to test out its functionality. I'll have documentation below that gives explanations for the api endpoints and their services as well as a high level explanation.
+
+### Environment setup Windows
+1) Clone the repository into your favorite IDE.
+2) Creating a python virtual environment is recommended to prevent conflicts with you global environment's interpreter. You can do this by running `py -m venv <yourenvname>` in your root directory or preferably, use VSCode and follow these steps: https://code.visualstudio.com/docs/python/environments. Make sure you activate the venv by cding into your venv file `cd <yourenvname>` and then run `.\Scripts\activate`. If you're running into trouble and you get an error saying you can't run scripts because they're disabled use this and make sure to run PowerShell as administrator: https://stackoverflow.com/questions/4037939/powershell-says-execution-of-scripts-is-disabled-on-this-system.
+3) Before running the install for requirements, remove uvloop from the requirements.txt file because Windows does not support it and it will still work without it. If in the root directory of the repo, run `py -m pip install -r backend/requirements.txt` in your terminal to install the required packages.
+4) To start the backend server, run `uvicorn backend.main:app --reload` in the root directory and navigate to http://127.0.0.1:8000/docs to interact with the API in a browser (note: I ran into issues on my windows desktop using 127.0.0.1:8000 and instead you should just use localhost:8000 if you run into CORS issues). I have set up the FastAPI docs in an organized and intuitive way so feel free to use this link rather than running Postman or something equivalent. Postman does work if that is your preference and you can use the same URL to serve it: http://127.0.0.1:8000 or just localhost port 8000. Parameters can be passed through the URL through Postman and the FastAPI docs will have a form that act as the URL params.
+5) Once the server is up, a file called `sql_app.db` will be created and you can simply delete the file if you want to restart the database. A new one will be created when the server is started up. Installation of SQLite is not required.
+6) Now you can play around with the API to test out its functionality. I'll have documentation below that gives explanations for the api endpoints and their services as well as a high level explanation.
+
 
 ## Data Model
 
@@ -157,14 +205,3 @@ This is a RESTful API designed to track running workouts. The API allows users t
 | `generate_workout_improvement_advice` | Generates advice for improving a specific workout based on its distance and duration.                | `workout: Workout`                    | `str`                         |
 
 
-## Project Design and Considerations
-
-- **API Design**: Emphasized clarity and consistency in endpoint naming and data handling. Each endpoint is intuitively structured to make API calls straightforward and predictable.
-- **Data Validation**: Used Pydantic models to ensure data integrity and validation, reducing the chance of invalid data entries.
-- **Error Handling**: Implemented robust error handling to provide meaningful feedback for failed operations, like invalid data points or missing records.
-- **Performance**: Optimized database queries and utilized relationships in SQLAlchemy to efficiently handle data retrieval.
-- **Extensibility**: The architecture allows for easy addition of new features, such as more aggregated data points or further integration with third-party APIs.
-
-## Presentation
-
-- A brief presentation and a demo video demonstrating the API endpoints and their usage have been created. This covers the API design choices, challenges faced, and the overall thought process in developing the application.
