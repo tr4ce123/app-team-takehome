@@ -1,6 +1,27 @@
 # Running Workout Tracker REST API
 This is a RESTful API designed to track running workouts. The API allows users to record, update, and retrieve workout data, including various filters for aggregating and analyzing workouts. It also integrates third-party weather data and the OpenAI API to enhance the workout experience with additional insights like outfit suggestions based on weather conditions.
 
+# Table of Contents
+
+- [Running Workout Tracker REST API](#running-workout-tracker-rest-api)
+- [Instructions / Usage](#instructions--usage)
+  - [Environment Setup Mac](#environment-setup-mac)
+  - [Environment Setup Windows](#environment-setup-windows)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Data Model](#data-model)
+  - [Workout Model](#workout-model)
+  - [Weather Model](#weather-model)
+- [API Endpoints](#api-endpoints)
+  - [Workouts Endpoints](#workouts-endpoints)
+  - [Weather Endpoints](#weather-endpoints)
+- [Service Methods](#service-methods)
+  - [WeatherService Methods](#weatherservice-methods)
+  - [WorkoutService Methods](#workoutservice-methods)
+  - [OpenAIService Methods](#openaiservice-methods)
+- [Project Design and Considerations](#project-design-and-considerations)
+- [Presentation](#presentation)
+
 
 ## Instructions / Usage
 ### Environment setup Mac
@@ -21,7 +42,7 @@ This is a RESTful API designed to track running workouts. The API allows users t
 
 ## Features
 
-### Core Features
+### Features
 
 - **Create Workout**: Add new workout records with details like name, location, distance, duration, and date.
 - **Retrieve Workouts**: Fetch individual or multiple workouts, with filtering options for retrieving recent workouts, such as weekly data.
@@ -32,11 +53,6 @@ This is a RESTful API designed to track running workouts. The API allows users t
 - **Weather Integration**: Fetch and store current and five-day weather forecasts for workout locations.
 - **Outfit Suggestions**: Get outfit recommendations for workouts based on weather conditions using the OpenAI API.
 - **Improvement Advice**: Receive advice on improving workout performance based on weekly averages.
-
-### Bonus Features
-
-- **Image Handling**: Potential to include image uploads (e.g., route snapshots or post-run selfies).
-- **Simple Web Frontend**: Future enhancements may include a web interface to interact with the API.
 
 ## Technologies Used
 
@@ -75,25 +91,71 @@ This is a RESTful API designed to track running workouts. The API allows users t
 ## API Endpoints
 
 ### Workouts Endpoints
+| Method | Endpoint                                  | Description                                                                                 | Required Parameters                     | Expected Response                   |
+|--------|-------------------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------|-------------------------------------|
+| GET    | `/workouts/`                              | Retrieves all workouts.                                                                     | None                                    | `list[Workout]`                     |
+| GET    | `/workouts/{workout_id}`                  | Retrieves a specific workout by its ID.                                                     | `workout_id: int`                       | `Workout`                           |
+| GET    | `/workouts/weekly/workouts`               | Retrieves all workouts logged in the last 7 days.                                           | None                                    | `list[Workout]`                     |
+| GET    | `/workouts/weekly/{data_point}/sum`       | Retrieves the sum of a specific workout data point from the last 7 days.                    | `data_point: str`                       | `float`                             |
+| GET    | `/workouts/weekly/{data_point}/average`   | Retrieves the average of a specific workout data point from the last 7 days.                | `data_point: str`                       | `float`                             |
+| GET    | `/workouts/personal-bests/distance`       | Retrieves the personal best distance.                                                       | None                                    | `str`                               |
+| GET    | `/workouts/personal-bests/duration`       | Retrieves the personal best duration.                                                       | None                                    | `str`                               |
+| GET    | `/workouts/advice/weather/outfit/{city}`  | Provides workout outfit advice based on the current weather in a specified city.            | `city: str`                             | `str`                               |
+| GET    | `/workouts/advice/improvement/`           | Provides general advice on improving workouts based on weekly averages.                     | None                                    | `str`                               |
+| GET    | `/workouts/advice/improvement/{workout_id}` | Provides advice on improving a specific workout based on its data.                         | `workout_id: int`                       | `str`                               |
+| POST   | `/workouts/`                              | Creates a new workout entry, optionally with weather data for the workout date.             | `workout: Workout`                      | `Workout`                           |
+| PUT    | `/workouts/{workout_id}`                  | Updates an existing workout.                                                               | `workout_id: int`, `workout: Workout`   | `Workout`                           |
+| DELETE | `/workouts/{workout_id}`                  | Deletes a specific workout by its ID.                                                      | `workout_id: int`                       | None                                |
 
-- `GET /workouts/`: Retrieve all workouts.
-- `GET /workouts/{workout_id}`: Retrieve a workout by its ID.
-- `GET /workouts/weekly/workouts`: Retrieve workouts from the last 7 days.
-- `GET /workouts/weekly/{data_point}/sum`: Get the sum of a specified data point (distance or duration) from the last 7 days.
-- `GET /workouts/weekly/{data_point}/average`: Get the average of a specified data point (distance or duration) from the last 7 days.
-- `GET /workouts/personal-bests/distance`: Get the personal best distance.
-- `GET /workouts/personal-bests/duration`: Get the personal best duration per mile.
-- `GET /workouts/advice/weather/outfit/{city}`: Get outfit suggestions based on the weather in the specified city.
-- `GET /workouts/advice/improvement/`: Get advice on how to improve workouts based on weekly averages.
-- `POST /workouts/`: Create a new workout record.
-- `PUT /workouts/{workout_id}`: Update an existing workout.
-- `DELETE /workouts/{workout_id}`: Delete a workout by its ID.
+
 
 ### Weather Endpoints
 
-- `GET /weather/{city}/forecast`: Retrieve a five-day weather forecast for a specified city.
-- `GET /weather/{city}/current`: Retrieve the current weather for a specified city.
-- `POST /weather/{city}/forecast`: Create a new five-day weather forecast for a specified city.
+| Method | Endpoint                    | Description                                                                                           | Required Parameters  | Expected Response                |
+|--------|-----------------------------|-------------------------------------------------------------------------------------------------------|----------------------|-----------------------------------|
+| GET    | `/weather/{city}/forecast`  | Gets the 5-day weather forecast for a specified city. Each day includes data for every three hours.   | `city: str`          | `list[Weather]`                  |
+| GET    | `/weather/{city}/current`   | Gets the current weather for a specified city.                                                        | `city: str`          | `Weather`                        |
+| GET    | `/weather/{weather_id}/`    | Gets weather data by its ID from the database.                                                        | `weather_id: int`    | `Weather`                        |
+| POST   | `/weather/{city}/forecast`  | Creates and stores a new 5-day weather forecast for a specified city.                                 | `city: str`          | `list[Weather]`                  |
+| POST   | `/weather/{city}/current`   | Creates and stores the current weather for a specified city.                                          | `city: str`          | `Weather`                        |
+| DELETE | `/weather/{weather_id}/`    | Deletes the weather data by its ID from the database.                                                 | `weather_id: int`    | `None`                           |
+
+
+## Service Methods
+### WeatherService Methods
+| Method                                | Description                                                                                          | Required Parameters                  | Expected Response             |
+|---------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------|
+| `fetch_five_day_forecast_from_api`    | Retrieves the 5-day weather forecast for a city using OpenWeather API.                               | `city: str`                          | `dict`                        |
+| `fetch_current_weather_from_api`      | Retrieves the current weather data for a city using OpenWeather API.                                 | `city: str`                          | `dict`                        |
+| `store_five_day_weather_forecast`     | Stores the 5-day weather forecast for a city in the database.                                        | `city: str`                          | `list[Weather]`               |
+| `store_current_weather`               | Stores the current weather data for a city in the database.                                          | `city: str`                          | `Weather`                     |
+| `get_weather_by_id`                   | Retrieves weather data by its ID from the database.                                                  | `weather_id: int`                    | `Weather`                     |
+| `get_five_day_forecast`               | Retrieves the 5-day weather forecast for a city from the database, fetching from API if not present. | `city: str`                          | `list[Weather]`               |
+| `get_weather_by_date_and_location`    | Retrieves weather data for a specific date and city.                                                 | `city: str`, `date: str`             | `Weather`                     |
+| `get_current_weather_by_location`     | Retrieves the current weather data for a city, fetching from API if not present.                     | `city: str`                          | `Weather`                     |
+| `delete_weather`                      | Deletes weather data by its ID from the database.                                                    | `weather_id: int`                    | `None`                        |
+
+### WorkoutService Methods
+| Method                                | Description                                                                                          | Required Parameters                   | Expected Response             |
+|---------------------------------------|------------------------------------------------------------------------------------------------------|---------------------------------------|-------------------------------|
+| `all`                                 | Retrieves all workouts from the database.                                                            | None                                  | `list[Workout]`               |
+| `get_workout_by_id`                   | Retrieves a workout by its ID.                                                                       | `workout_id: int`                     | `Workout`                     |
+| `get_weekly_workouts`                 | Retrieves all workouts from the past 7 days.                                                         | None                                  | `list[Workout]`               |
+| `get_total_weekly_aggreate_workout_data` | Retrieves the sum of a specified workout data point from the last 7 days.                         | `data_point: str`                     | `float`                       |
+| `get_average_weekly_aggreate_workout_data` | Retrieves the average of a specified workout data point from the last 7 days.                    | `data_point: str`                     | `float`                       |
+| `get_personal_best_distance`          | Retrieves the personal best distance.                                                                | None                                  | `str`                         |
+| `get_personal_best_duration_per_mile` | Retrieves the personal best duration per mile.                                                       | None                                  | `str`                         |
+| `create_workout`                      | Creates a new workout and optionally links it with weather data.                                     | `workout: Workout`, `weather: Weather` | `Workout`                     |
+| `update_workout`                      | Updates an existing workout.                                                                         | `workout: Workout`                    | `Workout`                     |
+| `delete_workout`                      | Deletes a workout by its ID.                                                                         | `workout_id: int`                     | `None`                        |
+
+### OpenAIService Methods
+| Method                                | Description                                                                                          | Required Parameters                   | Expected Response             |
+|---------------------------------------|------------------------------------------------------------------------------------------------------|---------------------------------------|-------------------------------|
+| `generate_workout_outfit`             | Generates a workout outfit suggestion based on the weather using the OpenAI API.                     | `weather: Weather`                    | `str`                         |
+| `generate_all_workout_improvement_advice` | Generates advice for improving workout performance based on average distance and duration.         | `avg_distance: float`, `avg_duration: float` | `str`                     |
+| `generate_workout_improvement_advice` | Generates advice for improving a specific workout based on its distance and duration.                | `workout: Workout`                    | `str`                         |
+
 
 ## Project Design and Considerations
 
