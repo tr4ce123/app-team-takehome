@@ -1,26 +1,40 @@
 # Running Workout Tracker REST API
 This is a RESTful API designed to track running workouts. The API allows users to record, update, and retrieve workout data, including various filters for aggregating and analyzing workouts. It also integrates third-party weather data and the OpenAI API to enhance the workout experience with additional insights like outfit suggestions based on weather conditions.
 
-# Table of Contents
+## Table of Contents
 
-- [Running Workout Tracker REST API](#running-workout-tracker-rest-api)
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Project Design and Considerations](#project-design-and-considerations)
-- [Presentation](#presentation)
-- [Instructions / Usage](#instructions--usage)
-  - [Environment Setup Mac](#environment-setup-mac)
-  - [Environment Setup Windows](#environment-setup-windows)
-- [Data Model](#data-model)
-  - [Workout Model](#workout-model)
-  - [Weather Model](#weather-model)
-- [API Endpoints](#api-endpoints)
-  - [Workouts Endpoints](#workouts-endpoints)
-  - [Weather Endpoints](#weather-endpoints)
-- [Service Methods](#service-methods)
-  - [WeatherService Methods](#weatherservice-methods)
-  - [WorkoutService Methods](#workoutservice-methods)
-  - [OpenAIService Methods](#openaiservice-methods)
+1. [Running Workout Tracker REST API](#running-workout-tracker-rest-api)
+   - [Big Picture](#big-picture)
+   - [Features](#features)
+
+2. [Technologies Used](#technologies-used)
+   - [Why Use This Stack?](#why-use-this-stack)
+     - [FastAPI](#fastapi)
+     - [SQLite, SQLAlchemy, Pydantic](#sqlite-sqlalchemy-pydantic)
+     - [OpenWeather API](#openweather-api)
+     - [OpenAI API](#openai-api)
+
+3. [Project Design and Considerations](#project-design-and-considerations)
+   - [API Endpoint Structure](#api-endpoint-structure)
+
+4. [Presentation](#presentation)
+   - [Instructions / Usage](#instructions--usage)
+     - [Environment Setup on Mac](#environment-setup-mac)
+     - [Environment Setup on Windows](#environment-setup-windows)
+
+5. [Data Model](#data-model)
+   - [Workout Model](#workout-model)
+   - [Weather Model](#weather-model)
+
+6. [API Endpoints](#api-endpoints)
+   - [Workouts Endpoints](#workouts-endpoints)
+   - [Weather Endpoints](#weather-endpoints)
+
+7. [Service Methods](#service-methods)
+   - [WeatherService Methods](#weatherservice-methods)
+   - [WorkoutService Methods](#workoutservice-methods)
+   - [OpenAIService Methods](#openairevice-methods)
+
 
 # Big Picture
 
