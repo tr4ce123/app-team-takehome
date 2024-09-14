@@ -108,7 +108,7 @@ def get_personal_best_distance(workout_service: WorkoutService = Depends(Workout
 @api.get("/personal-bests/duration", response_model=str, tags=["Workouts"])
 def get_personal_best_duration(workout_service: WorkoutService = Depends(WorkoutService)) -> str:
     """
-    Get the personal best duration
+    Get the personal best duration per mile
 
     Params:
         workout_service: Service for interacting with workouts

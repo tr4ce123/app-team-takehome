@@ -34,10 +34,10 @@ class WeatherService:
         self._session = session
 
 
-    def fetch_five_day_forecast_from_api(self, city: str):
+    def fetch_five_day_forecast_from_api(self, city: str) -> dict:
         """
-        Uses geolocator to get the latitude and longitude of a city 
-        and uses the OpenWeather API to get the weather forecast for every three hours of the next five days.
+        Uses geolocator to get the latitude and longitude of a city.
+        Uses the OpenWeather API to get the weather forecast for every three hours of the next five days.
         
         Params:
             city: The city to get the weather data for
@@ -73,8 +73,8 @@ class WeatherService:
     
     def fetch_current_weather_from_api(self, city: str) -> dict:
         """
-        Uses geolocator to get the latitude and longitude of a city 
-        and uses the OpenWeather API to get the current weather data.
+        Uses geolocator to get the latitude and longitude of a city.
+        Uses the OpenWeather API to get the current weather data.
         
         Params:
             city: The city to get the weather data for
@@ -109,7 +109,8 @@ class WeatherService:
     
     def store_five_day_weather_forecast(self, city: str) -> list[Weather]:
         """
-        Retrieves the weather forecast for the next seven days for a given location and stores it in the database.
+        Retrieves the weather forecast for the next five days for a given location and stores it in the database.
+        This function is only called if the data doesn't already exist in the database.
         
         Params:
             city: The location to get the forecast for
@@ -179,7 +180,8 @@ class WeatherService:
     def store_current_weather(self, city: str) -> Weather:
         """
         Retrieves the current weather data for a given location and stores it in the database.
-        
+        This function is only called if the data doesn't already exist in the database.
+
         Params:
             city: The location to get the forecast for
             
@@ -190,7 +192,7 @@ class WeatherService:
         data = self.fetch_current_weather_from_api(city)
 
         if data is None:
-            return HTTPException(status_code=404, detail="Weather data not found")
+            return HTTPException(status_code=404, detail="No data found after fetching from the API")
 
         entity = WeatherEntity(
             city=city.lower(),
@@ -259,33 +261,16 @@ class WeatherService:
 
         # Grab the newly stored data from the database and return it
         stored_entities = self._session.scalars(query).all()
+        if stored_entities is None:
+            return HTTPException(status_code=404, detail="Weather data not found")
+
         return [entity.to_model() for entity in stored_entities]
     
-
-    def get_weather_by_date_and_location(self, city: str, date: str) -> Weather:
-        """
-        Retrieves the weather forecast for a given date. Raises an error if no weather data for the given date is found.
-        
-        Params:
-            date: The date to get the forecast for
-            
-        Returns:
-            Weather: The weather forecast for the given date
-        """
-
-        query = select(WeatherEntity).filter(WeatherEntity.date == date, WeatherEntity.city == city.lower(), WeatherEntity.is_current == False)
-
-        entity = self._session.scalars(query).one_or_none()
-
-        if entity is None:
-            return self.store_weather_by_date(city, date)
-
-        return entity.to_model()
     
     
     def get_current_weather_by_location(self, city: str) -> Weather:
         """
-        Retrieves the weather forecast for a given date. Raises an error if no weather data for the given date is found.
+        Retrieves the weather forecast for a given location. Raises an error if no weather data for the given date is found.
         
         Params:
             date: The date to get the forecast for
@@ -314,6 +299,9 @@ class WeatherService:
 
         query = select(WeatherEntity).filter(WeatherEntity.id == weather_id)
         entity = self._session.scalars(query).one_or_none()
+
+        if entity is None:
+            raise HTTPException(status_code=404, detail=f"Weather with ID: { weather_id } does not exist")
 
         if entity:
             self._session.delete(entity)

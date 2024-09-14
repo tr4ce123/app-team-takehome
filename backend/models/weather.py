@@ -6,7 +6,7 @@ class Weather(BaseModel):
     Pydantic model to represent one weather object.
 
     This model is based on the WeatherEntity model, which defines the shape of the 
-    'Weather' database table in the PostgreSQL database.
+    'Weather' database table in the SQLite database.
 
     All units are Imperial.
     """
