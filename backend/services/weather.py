@@ -63,7 +63,7 @@ class WeatherService:
 
         # Simple check to see if the request was successful
         if response is None or response.status_code != 200:
-            return HTTPException(status_code=404, detail="Weather data not found")
+            raise HTTPException(status_code=404, detail="Weather data not found")
 
         # Ensure the response a dictionary
         data = response.json()
@@ -212,6 +212,26 @@ class WeatherService:
         return entity.to_model()
     
 
+    def get_weather_by_id(self, weather_id: int) -> Weather:
+        """
+        Retrieves a weather entity by its ID.
+        Raises an error if no weather with the given ID is found.
+        
+        Params:
+            weather_id: The ID of the weather entity to retrieve
+            
+        Returns:
+            Weather: The weather entity with the specified ID
+        """
+
+        entity = self._session.query(WeatherEntity).filter(WeatherEntity.id == weather_id).one_or_none()
+
+        if entity is None:
+            raise HTTPException(status_code=404, detail=f"Weather with ID: { weather_id } does not exist")
+        
+        return entity.to_model()
+    
+
     def get_five_day_forecast(self, city: str) -> list[Weather]:
         """
         Retrieves the weather forecast for the current day and next five days for a given location.
@@ -282,3 +302,19 @@ class WeatherService:
             return self.store_current_weather(city)
 
         return entity.to_model()
+
+
+    def delete_weather(self, weather_id) -> None:
+        """
+        Deletes the weather entity by its ID
+        
+        Params:
+            weather_id: The ID of the weather entity to delete
+        """
+
+        query = select(WeatherEntity).filter(WeatherEntity.id == weather_id)
+        entity = self._session.scalars(query).one_or_none()
+
+        if entity:
+            self._session.delete(entity)
+            self._session.commit()

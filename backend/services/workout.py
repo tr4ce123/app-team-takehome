@@ -191,9 +191,11 @@ class WorkoutService:
             raise HTTPException(status_code=404, detail=f"No workout with ID: { workout.id } to update")
 
         entity.name = workout.name
+        entity.city = workout.city
         entity.distance = workout.distance
         entity.duration = workout.duration
         entity.date = workout.date
+        
 
         self._session.commit()
 

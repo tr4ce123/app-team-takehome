@@ -43,6 +43,22 @@ def get_current_weather_by_location(city: str, weather_service: WeatherService =
     return weather_service.get_current_weather_by_location(city)
 
 
+@api.get("/{weather_id}/", response_model=Weather, tags=["Weather"])
+def get_current_weather_by_id(weather_id: int, weather_service: WeatherService = Depends(WeatherService)) -> Weather:
+    """
+    Gets the weather by its ID.
+
+    Params:
+        weather_service: Service for interacting with weather data
+        weather_id: The ID of the weather to retrieve
+
+    Returns:
+        Weather: The weather with the specified ID
+    """
+
+    return weather_service.get_weather_by_id(weather_id)
+
+
 @api.post("/{city}/forecast", response_model=list[Weather], tags=["Weather"])
 def create_five_day_forecast_by_city(city: str, weather_service: WeatherService = Depends(WeatherService)) -> list[Weather]:
     """
@@ -59,23 +75,6 @@ def create_five_day_forecast_by_city(city: str, weather_service: WeatherService 
     return weather_service.store_five_day_weather_forecast(city)
 
 
-@api.post("/{city}/{date}", response_model=Weather, tags=["Weather"])
-def create_weather_forecast_by_date(city: str, date: str, weather_service: WeatherService = Depends(WeatherService)) -> Weather:
-    """
-    Creates a new weather forecast for a given location and date.
-
-    Params:
-        weather_service: Service for interacting with weather data
-        date: The date to get the forecast for in the form of a string
-        city: The location to get the forecast for in the form of a string
-
-    Returns:
-        Weather: The newly created weather forecast
-    """
-
-    return weather_service.store_weather_by_date(city, date)
-
-
 @api.post("/{city}/current", response_model=Weather, tags=["Weather"])
 def create_current_weather_by_location(city: str, weather_service: WeatherService = Depends(WeatherService)) -> Weather:
     """
@@ -90,3 +89,20 @@ def create_current_weather_by_location(city: str, weather_service: WeatherServic
     """
 
     return weather_service.store_current_weather(city)
+
+
+
+@api.delete("/{weather_id}/", response_model=None, tags=["Weather"])
+def delete_current_weather_by_location(weather_id: int, weather_service: WeatherService = Depends(WeatherService)) -> JSON:
+    """
+    Deletes the weather model by its ID.
+
+    Params:
+        weather_service: Service for interacting with weather data
+        weather_id: The ID of the weather to delete
+
+    Returns:
+        None
+    """
+
+    return weather_service.delete_weather(weather_id)
